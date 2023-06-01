@@ -55,9 +55,3 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         user_list = ", ".join(manager.user_list)
         await manager.broadcast(f"Online users: {user_list}")
         await manager.broadcast(f"Client #{client_id} left the chat")
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
