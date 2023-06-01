@@ -8,9 +8,10 @@
 
 ### Или же через виртуальное окружение python:
 * 1. python3 -m venv env
-* 2. pip install -r requirements.txt
-* 3. python3 main.py
-* 4. Перейти в любом удобном для вас браузере по адресу http://0.0.0.0:8000
+* 2. source env/bin/activate
+* 3. pip install -r requirements.txt
+* 4. python3 main.py
+* 5. Перейти в любом удобном для вас браузере по адресу http://0.0.0.0:8000
 
 ## Что сделано в данном проекте?
 * Пользователь может задавать себе имя 
