@@ -8,7 +8,7 @@
     <head>
         <title>Chat</title>
     </head>
-    <body>
+    <body onload="displayLastMessages()">
         <h1>WebSocket Chat</h1>
         <div id="div1" class="hidden-element">
           <h3>Online Users:</h3>
@@ -75,6 +75,7 @@
               document.querySelector("#header").classList.add("hidden-element")
               document.querySelector("#form-name").classList.add("hidden-element")
               ws = new WebSocket(`ws://localhost:8000/ws/${name.value}`)
+
               ws.onmessage = function(event) {
                 if (event.data.startsWith("Online users:")) {
                   var user_list = document.getElementById('user-list')
@@ -88,13 +89,23 @@
                     user_list.appendChild(listItem)
                   });
                 } else {
-                  var messages = document.getElementById('messages')
-                  var message = document.createElement('li')
-                  var content = document.createTextNode(event.data)
-                  message.appendChild(content)
-                  messages.appendChild(message)
+                    var chatDiv = document.getElementById("messages");
+                    var message_1 = event.data;
+                    chatDiv.innerHTML += message_1 + "<br>";
+                    var messages_session = sessionStorage.getItem("messages");
+                    if (!messages_session) {
+                        messages_session = [];
+                    } else {
+                        messages_session = JSON.parse(messages_session);
+                    }
+                    messages_session.push(event.data);
+                    if (messages_session.length > 10) {
+                        messages_session.shift();
+                    }
+                    sessionStorage.setItem("messages", JSON.stringify(messages_session));
                 }
               }
+
               event.preventDefault()
             }
             function saveUsername() {
@@ -102,6 +113,16 @@
                 var username = usernameInput.value.trim();
                 if (username !== "") {
                     sessionStorage.setItem("username", username);
+                }
+            }
+            function displayLastMessages() {
+                var chatDiv = document.getElementById("messages");
+                var messages = sessionStorage.getItem("messages");
+                if (messages) {
+                    messages = JSON.parse(messages);
+                    for (var i = 0; i < messages.length; i++) {
+                        chatDiv.innerHTML += messages[i] + "<br>";
+                    }
                 }
             }
         </script>
