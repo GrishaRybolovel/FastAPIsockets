@@ -54,4 +54,3 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         manager.disconnect(websocket, client_id)
         user_list = ", ".join(manager.user_list)
         await manager.broadcast(f"Online users: {user_list}")
-        await manager.broadcast(f"Client #{client_id} left the chat")
