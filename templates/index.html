@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<style>
+  .hidden-element {
+    display: none;
+  }
+</style>
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <h1>WebSocket Chat</h1>
+        <div id="div1" class="hidden-element">
+          <h3>Online Users:</h3>
+          <ul id="user-list"></ul>
+        </div>
+        <h2 id="header">To enter the chat, please, specify your name!</h2>
+        <form id="form-name" action="" onsubmit="setName(event)">
+            <input type="text" id="messageName" autocomplete="off"/>
+            <button onclick="saveUsername()">Send</button>
+        </form>
+        <h2 id="header-2" class="hidden-element">Your ID: <span id="ws-id"></span></h2>
+        <form id="form-sending" action="" onsubmit="sendMessage(event)" class="hidden-element">
+            <input type="text" id="messageText" autocomplete="off"/>
+            <button>Send</button>
+        </form>
+        <ul id='messages'>
+        </ul>
+        <script>
+            var ws
+            function sendMessage(event) {
+                var input = document.getElementById("messageText")
+                ws.send(input.value)
+                input.value = ''
+                event.preventDefault()
+            }
+            var savedUsername = sessionStorage.getItem("username")
+            if (savedUsername){
+              var name = savedUsername
+              document.querySelector("#ws-id").textContent = name
+              document.querySelector("#div1").classList.remove("hidden-element")
+              document.querySelector("#form-sending").classList.remove("hidden-element")
+              document.querySelector("#header-2").classList.remove("hidden-element")
+              document.querySelector("#header").classList.add("hidden-element")
+              document.querySelector("#form-name").classList.add("hidden-element")
+              ws = new WebSocket(`ws://localhost:8000/ws/${name}`)
+              ws.onmessage = function(event) {
+                if (event.data.startsWith("Online users:")) {
+                  var user_list = document.getElementById('user-list')
+                  user_list.innerHTML = "";
+                  var users = event.data.split(" ")
+                  users.splice(0, 2)
+                  console.log(users);
+                  users.forEach((user) => {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = user;
+                    user_list.appendChild(listItem)
+                  });
+                } else {
+                  var messages = document.getElementById('messages')
+                  var message = document.createElement('li')
+                  var content = document.createTextNode(event.data)
+                  message.appendChild(content)
+                  messages.appendChild(message)
+                }
+              }
+              event.preventDefault()
+            }
+            function setName(event){
+              var name = document.getElementById("messageName")
+              document.querySelector("#ws-id").textContent = name.value
+              document.querySelector("#div1").classList.remove("hidden-element")
+              document.querySelector("#form-sending").classList.remove("hidden-element")
+              document.querySelector("#header-2").classList.remove("hidden-element")
+              document.querySelector("#header").classList.add("hidden-element")
+              document.querySelector("#form-name").classList.add("hidden-element")
+              ws = new WebSocket(`ws://localhost:8000/ws/${name.value}`)
+              ws.onmessage = function(event) {
+                if (event.data.startsWith("Online users:")) {
+                  var user_list = document.getElementById('user-list')
+                  user_list.innerHTML = "";
+                  var users = event.data.split(" ")
+                  users.splice(0, 2)
+                  console.log(users);
+                  users.forEach((user) => {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = user;
+                    user_list.appendChild(listItem)
+                  });
+                } else {
+                  var messages = document.getElementById('messages')
+                  var message = document.createElement('li')
+                  var content = document.createTextNode(event.data)
+                  message.appendChild(content)
+                  messages.appendChild(message)
+                }
+              }
+              event.preventDefault()
+            }
+            function saveUsername() {
+                var usernameInput = document.getElementById("messageName");
+                var username = usernameInput.value.trim();
+                if (username !== "") {
+                    sessionStorage.setItem("username", username);
+                }
+            }
+        </script>
+    </body>
+</html>
