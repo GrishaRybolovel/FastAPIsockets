@@ -13,14 +13,12 @@ def get_random_hex_color():
 
 def createCommandBody(my_type: int, amount: int = None):
     # Added type into the request body(1st one byte)
-    print(type(my_type))
     res = bytearray([my_type, ])
-    print(res)
 
     # ReadCard
     if my_type == 1:
         # Vendista takes penny
-        amount *= 10
+        amount *= 100
 
         # Adding 4 bytes of the amount to the request
         byte1 = (amount >> 24) & 0xFF
@@ -40,14 +38,12 @@ def createCommandBody(my_type: int, amount: int = None):
 
         # Adding 4 bytes of UNIX time to the request
         unix_time = int(time.time())
-        print(unix_time)
 
         # Convert Unix time to 4 bytes in 0x00 format
         ubyte1 = (unix_time >> 24) & 0xFF
         ubyte2 = (unix_time >> 16) & 0xFF
         ubyte3 = (unix_time >> 8) & 0xFF
         ubyte4 = unix_time & 0xFF
-        print(f"0x{byte1:02X} 0x{byte2:02X} 0x{byte3:02X} 0x{byte4:02X}")
         res.append(ubyte4)
         res.append(ubyte3)
         res.append(ubyte2)
@@ -124,20 +120,11 @@ def sendCommand(inst_type, amount = None):
                        stopbits=stop_bits, parity=parity) as ser:
         command = createCommand(createCommandBody(inst_type, amount), table_instructions[inst_type])
         ser.write(command)
-        read_timeout = 0.1
-
-        quantity = ser.in_waiting
 
         while True:
-
-            if quantity > 0:
-                print(ser.read(quantity))
-            else:
-                time.sleep(read_timeout)
-            quantity = ser.in_waiting
-
-            if quantity == 0:
-                break
+            msg = ser.read()
+            print(msg)
+            print(type(msg))
 
 
 def createTransactionSlave(amount):
