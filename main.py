@@ -119,21 +119,25 @@ def sendCommand(inst_type, amount = None):
     data_bits = 8
     stop_bits = 1
     parity = serial.PARITY_NONE
-    ser = serial.Serial(port, baud_rate, bytesize=data_bits,
-                        stopbits=stop_bits, parity=parity)
-    command = createCommand(createCommandBody(inst_type, amount), table_instructions[inst_type])
-    ser.write(command)
-    t_start = time.time()
     messages = []
-    while True:
-        t_now = time.time()
-        if t_now - t_start > 31:
-            break
-        else:
-            msg = ser.read(128)
-            print(msg)
-            messages.append(msg)
-    return messages
+    with serial.Serial(port, baud_rate, bytesize=data_bits,
+                       stopbits=stop_bits, parity=parity) as ser:
+        command = createCommand(createCommandBody(inst_type, amount), table_instructions[inst_type])
+        ser.write(command)
+        read_timeout = 0.1
+
+        quantity = ser.in_waiting
+
+        while True:
+
+            if quantity > 0:
+                print(ser.read(quantity))
+            else:
+                time.sleep(read_timeout)
+            quantity = ser.in_waiting
+
+            if quantity == 0:
+                break
 
 
 def createTransactionSlave(amount):
