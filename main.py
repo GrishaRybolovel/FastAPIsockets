@@ -2,6 +2,8 @@ import serial
 
 import random
 
+import time
+
 def get_random_hex_color():
     r = random.randint(0, 255)
     g = random.randint(0, 255)
@@ -15,8 +17,9 @@ def createCommandBody(my_type: int, amount: int = None):
     res = bytearray([my_type, ])
     print(res)
 
+    # ReadCard
     if my_type == 1:
-        #Vendista takes penny
+        # Vendista takes penny
         amount *= 10
 
         # Adding 4 bytes of the amount to the request
@@ -54,13 +57,21 @@ def createCommandBody(my_type: int, amount: int = None):
         res.append(0x01)
         return res
 
+    # CancelLastTransaction
+    elif my_type == 7:
+        res.append(0x07)
+
+    # CancelReadCard
+    elif my_type == 8:
+        res.append(0x08)
+        return res
+
+    # FillScreenWithColor
     elif my_type == 9:
         color = get_random_hex_color()
         res.append(color[0])
         res.append(color[1])
         return res
-
-
 
 
 def createCommand(body, size):
@@ -87,32 +98,51 @@ def createCommand(body, size):
     byte1 = (crc >> 8) & 0xFF
     byte2 = crc & 0xFF
 
-    command = bytearray([size, byte2, byte1])
+    sbyte1 = (size >> 8) & 0xFF
+    sbyte2 = size & 0xFF
+
+    command = bytearray([sbyte2, sbyte1, byte2, byte1])
     command += body
-    # command = b"".join([command, body])
     return command
 
 
-def createTransactionSlave(inst_type, amount, body_len):
-
+def sendCommand(inst_type, amount = None):
+    table_instructions = {
+        1: 12,
+        7: 1,
+        8: 1,
+        9: 3
+    }
 
     port = '/dev/ttyUSB0'
     baud_rate = 115200
     data_bits = 8
     stop_bits = 1
     parity = serial.PARITY_NONE
-
     ser = serial.Serial(port, baud_rate, bytesize=data_bits,
                         stopbits=stop_bits, parity=parity)
-    command = createCommand(createCommandBody(inst_type, amount), body_len)
+    command = createCommand(createCommandBody(inst_type, amount), table_instructions[inst_type])
     ser.write(command)
-    ser.close()
+    t_start = time.time()
+    messages = []
+    while True:
+        t_now = time.time()
+        if t_now - t_start > 31:
+            break
+        else:
+            msg = ser.read(128)
+            print(msg)
+            messages.append(msg)
+    return messages
+
+
+def createTransactionSlave(amount):
+    res = sendCommand(1, amount)
+    return res
 
 
 if __name__ == '__main__':
-    my_type = 9
     amount = 1
-    body_len = 3
     #print(createCommand(createCommandBody(my_type), body_len))
 
-    createTransactionSlave(my_type, amount, body_len)
+    createTransactionSlave(amount)
